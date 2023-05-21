@@ -1,0 +1,394 @@
+#include <windows.h>
+#include <GL/gl.h>
+#include <GL\GLU.H>
+#include <GL\glut.h>
+#include <cmath>
+#include <iostream>
+#include <vector>
+#include <time.h>
+#include <ctime>
+#include <fstream>
+#include <conio.h>
+#include <string>
+#include <time.h>
+#include <algorithm>
+#include <cstdlib>
+#include <stdlib.h>
+
+//#include <locale>
+
+using namespace std;
+
+class Point
+{
+	///private: double x, y;
+
+public: double x, y;
+	  Point() { x = 0, y = 0; }
+	  Point(double x_, double y_) : x(x_), y(y_) {}
+	  Point operator- (Point const arg)
+	  {
+		  return Point(this->x - arg.x, this->y - arg.y);
+	  }
+	  Point operator+ (Point const arg)
+	  {
+		  return Point(this->x + arg.x, this->y + arg.y);
+	  }
+	  bool operator== (Point const arg)
+	  {
+		  return ((this->x == arg.x) && (this->y == arg.y));
+	  }
+	  Point operator= (Point const arg)
+	  {
+		  return Point(this->x = arg.x, this->y = arg.y);
+	  }
+};
+
+
+
+int c = 0;
+float xmin = -1, xmax = 10, ymin = -1, ymax = 10, w = 500, h = 500;
+const int SECONDS_TO_DRAW_POLYGON = 2;
+string s;
+int ALL_TIME = 60;
+int counter = 0;
+int FlagForEnd = 1;
+int k, m, n = 0;
+
+float d = 0.3;
+int score = 0;
+int sec = 0;
+bool end_ = 0;
+int time_ = SECONDS_TO_DRAW_POLYGON;
+int newtime = SECONDS_TO_DRAW_POLYGON, eps = 0.1;
+vector <Point> points;
+vector <Point> sword;
+
+double PSP(Point& a, Point& b, Point& c, Point& d)
+{
+	return (b - a).x * (d - c).y - (b - a).y * (d - c).x;
+}
+
+
+void display();
+
+
+void Pooi(Point localC)
+{
+	//glColor3f(0.0, 0.0, 0.0);
+	glPointSize(5);
+	glBegin(GL_POINTS);
+	glVertex2d(localC.x, localC.y);
+	glEnd();
+	glFinish();
+}
+
+void RisLn(Point lx1, Point lx2)
+{
+	glBegin(GL_LINES);
+	glVertex2f(lx1.x, lx1.y);
+	glVertex2f(lx2.x, lx2.y);
+	glEnd();
+	glFlush();
+}
+double random(double min, double max) {
+
+	return (double)(rand()) / RAND_MAX * (max - min) + min;
+}
+
+void file(Point a)
+{
+	cout << a.x << " " << a.y << endl;
+	Point C;
+	glColor3ub(0, 0, 255);
+	fstream SwordL;
+	SwordL.open("SwordL.txt", ios::in);
+	while (!SwordL.eof())
+	{
+		SwordL >> C.x >> C.y;
+		//SwordL >> C.y;
+		C = C + a;
+		sword.push_back(C);
+		if (sword.size() > 1)
+		{
+			//glLineWidth(3);
+			//RisLn(sword[sword.size() - 1], sword[sword.size() - 2]);
+			//cout << a.x << " " << a.y << endl;
+			/*if (C == sword[0])
+			{
+				sword[sword.size() - 1].x = sword[0].x;
+				sword[sword.size() - 1].y = sword[0].y;
+				sword.pop_back();
+				break;
+			}*/
+		}
+	}
+	int size = sword.size();
+
+	for (int i = 1; i <= size; i++)
+	{
+		cout << sword[i - 1].x << " " << sword[i - 1].y << endl;
+		RisLn(sword[i % size], sword[i - 1]);
+	}
+	SwordL.close();
+	//cout << "gbplf" << endl;
+	return;
+}
+
+void Mnog()
+{
+
+	glClearColor(1.0, 1.0, 1.0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	Point localC;
+	glColor3ub(0, 0, 255);
+	float k = 0;
+	//int c = 3 + rand() % 10;
+	/*localC.x = rand() % 8 + 1;
+	localC.y = rand() % 4 + 3;*/
+	localC.x = random(0, 9);
+	localC.y = random(2, 8);
+	points.push_back(localC);
+	//cout << localC.x << " " << localC.y << endl;
+	Pooi(localC);
+
+	for (int i = 0; i < 500; i++)
+	{
+		double f = random(0, 1);
+		//float f = 0.0 + 1.1 * rand() / (float)RAND_MAX;
+		k += f;
+
+		if (k > 2 * 3.1415)
+		{
+			break;
+		}
+
+		//float r = (rand() % 10)*0.1 + 1;
+		double r = random(0.5, 1);
+		localC.x = r * cos(k) + points[points.size() - 1].x;
+		localC.y = r * sin(k) + points[points.size() - 1].y;
+		if (localC.x >= xmax || localC.y >= ymax || localC.x <= xmin || localC.y <= ymin + 3)
+		{
+			//cout << "[eqyz";
+			k -= f;
+			continue;
+		}
+
+		if (points.size() < 3)
+		{
+			points.push_back(localC);
+			continue;
+		}
+
+
+		if (PSP(points[points.size() - 1], points[0], points[points.size() - 1], localC) > 0 || PSP(points[0], points[1], points[0], localC) < 0)
+		{
+			//i--;
+			break;
+		}
+
+		points.push_back(localC);
+		//cout << k << " ";
+	}
+
+
+	int size = points.size();
+
+	for (int i = 1; i <= size; i++)
+	{
+		/*glBegin(GL_POINTS);
+		glVertex2f(points[i%size].x, points[i%size].y);
+		glEnd();
+		glFlush();*/
+		/*glBegin(GL_LINES);
+		glVertex2f(points[i%size].x, points[i%size].y);
+		glVertex2f(points[i - 1].x, points[i - 1].y);
+		glEnd();
+		glFlush();*/
+		RisLn(points[i % size], points[i - 1]);
+	}
+}
+
+void DisplayText(float x, float y, const char* string) {
+	int j = strlen(string);
+	glColor3f(0, 0, 0);
+	glRasterPos2f(x, y);
+	for (int i = 0; i < j; i++)
+	{
+		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, string[i]);
+	}
+}
+
+void reshape(int width, int height)
+{
+	glViewport(0, 0, (GLsizei)width, (GLsizei)height);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(xmin, xmax, ymin, ymax);
+
+}
+
+void timer1(int value) {
+	if (time_ == 0)
+	{
+		time_ = newtime;
+		points.clear();
+		end_ = true;
+		counter = 0;
+		display();
+	}
+	else
+	{
+		time_ -= 1;
+		end_ = 0;
+	}
+
+	if (ALL_TIME == 0)
+	{
+		display();
+		Sleep(1000000000);
+	}
+	else
+	{
+		ALL_TIME -= 1;
+		glBegin(GL_POLYGON);
+		glColor3f(1, 1, 1);
+		glVertex2f(1, 0.9);
+		glVertex2f(2, 0.9);
+		glVertex2f(2, 1.6);
+		glVertex2f(1, 1.6);
+		glEnd();
+		glFinish();
+
+		glBegin(GL_POLYGON);
+		glColor3f(1, 1, 1);
+		glVertex2f(4.2, -0.1);
+		glVertex2f(4.7, -0.1);
+		glVertex2f(4.7, 0.5);
+		glVertex2f(4.2, 0.5);
+		glEnd();
+		glFinish();
+
+		DisplayText(-0.5, 9, "ALL TIME: ");
+		s = to_string(ALL_TIME);
+		DisplayText(1.5, 1, s.c_str());
+		glFinish();
+
+		DisplayText(1, 0, "Hit the monster: ");
+		s = to_string(time_);
+		DisplayText(4.2, 0, s.c_str());
+		glFinish();
+	}
+	glutTimerFunc(1000, timer1, 0);
+}
+
+void drawText(const char* text, int length, int x, int y)
+{
+	glMatrixMode(GL_PROJECTION);
+	double* matrix = new double[16];
+	glGetDoublev(GL_PROJECTION_MATRIX, matrix);
+	glLoadIdentity();
+	glOrtho(0, 400, 0, 400, -5, 5);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glPushMatrix();
+	glLoadIdentity();
+	glRasterPos2i(x, y);
+	for (int i = 0; i < length; i++)
+	{
+		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, (int)text[i]);
+	}
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixd(matrix);
+	glMatrixMode(GL_MODELVIEW);
+
+}
+
+void display(void)
+{
+
+	glClearColor(1.0, 1.0, 1.0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glColor3ub(0, 255, 0);
+	glPointSize(0);
+	glEnd();
+	glFinish();
+	points.clear();
+	Mnog();
+	if (ALL_TIME > 0)
+	{
+		DisplayText(7, 0, "SCORE: ");
+		s = to_string(score);
+		DisplayText(9, 0, s.c_str());
+		glFinish();
+		glBegin(GL_POLYGON);
+		glColor3f(1, 1, 1);
+		glVertex2f(1, 0);
+		glVertex2f(1.5, 0);
+		glVertex2f(1.5, 0.6);
+		glVertex2f(1, 0.6);
+		glEnd();
+		glFinish();
+		DisplayText(-0.5, 1, "ALL TIME: ");
+		s = to_string(ALL_TIME);
+		DisplayText(1.5, 1, s.c_str());
+		glFinish();
+
+		DisplayText(-0.5, 0, "Hit the monster: ");
+		s = to_string(time_);
+		DisplayText(2.4, 0, s.c_str());
+		glFinish();
+	}
+	else
+	{
+		glClearColor(1.0, 1.0, 1.0, 1.0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		DisplayText(3, 5, "GAME OVER");
+		DisplayText(3, 4, "SCORE: ");
+		s = to_string(score);
+		DisplayText(5, 4, s.c_str());
+		glFinish();
+	}
+}
+
+void mouse(int button, int state, int x0, int y0)
+{
+	if ((button == GLUT_LEFT_BUTTON) && (state == GLUT_UP))
+	{
+		sword.clear();
+		//c++;
+		Point localC = Point(x0 * (xmax - xmin) / w + xmin, ymax - y0 * (ymax - ymin) / h);
+		//cout << localC.x << " " << localC.y << endl;
+		file(localC);
+	}
+	if ((button == GLUT_RIGHT_BUTTON) && (state == GLUT_UP))
+	{
+		display();
+	}
+
+}
+
+int main(int argc, char* argv[])
+{
+	srand(time(0));
+	setlocale(0, "Russian");
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_RGB);
+	glutInitWindowSize(w, h);
+	glutInitWindowPosition(100, 200);
+	glutCreateWindow("RGB");
+	glClearColor(1.0, 1.0, 1.0, 0.0);
+	glutDisplayFunc(display);
+	//glVertex2f(x0, y0);
+	glEnd();
+	glFinish();
+	glutMouseFunc(mouse);
+	glShadeModel(GL_FLAT);
+	glutReshapeFunc(reshape);
+	glutMainLoop();
+	return 0;
+	/*_getch();
+	return 0;*/
+}
+
